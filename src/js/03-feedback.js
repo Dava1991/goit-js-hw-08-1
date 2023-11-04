@@ -1,41 +1,37 @@
 import throttle from 'lodash.throttle';
-const STORAGE_KEY = 'feedback-form-state';
-let dataSet = {};
-const refs = {
-    inputForm: document.querySelector('.feedback-form'),
-    email: document.querySelector('.feedback-form input'),
-    message: document.querySelector('.feedback-form textarea')
-};
-refs.inputForm.addEventListener('input', throttle(onInputForm, 500));
-function onInputForm(e) {
-    dataSet[e.target.name] = e.target.value;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataSet));
-}
 
-populateData();
-function populateData() {
-    const savedData = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    console.log(savedData);
-  if (savedData) {
-      refs.email.value = savedData.email ?? [];
-      dataSet.email = savedData.email;
-      dataSet.message = savedData.message;
-      refs.message.value = savedData.message  ?? [];
-    };
+const form = document.querySelector('.feedback-form');
+
+let onDataForm = {};
+let isFormSubmitted = false;
+
+const onElForm = () => {
+  const savedMsg = localStorage.getItem('feedback-form-state');
+  onDataForm = JSON.parse(savedMsg) ?? {};
+  const formDataKeys = Object.keys(onDataForm);
+
+  if (savedMsg) {
+    formDataKeys.map(key => {
+      form.elements[key].value = onDataForm[key];
+    });
+  }
 };
 
-refs.inputForm.addEventListener('submit', onFormSubmit);
-function onFormSubmit(e) {
-    if (refs.email.value === "" || refs.message.value === "") {
-        alert(`Please enter all fields!`);
-        return;
-    } else {
-    console.log(dataSet);
-    e.preventDefault();
-    e.currentTarget.reset();
-    localStorage.removeItem(STORAGE_KEY);
-    dataSet = {};
-    refs.email = "";
-    refs.message = "";
-     }
-}
+const onInputForm = evt => {
+  onDataForm[evt.target.name] = evt.target.value;
+  localStorage.setItem('feedback-form-state', JSON.stringify(onDataForm));
+};
+
+const onSubmitForm = evt => {
+  evt.preventDefault();
+  localStorage.removeItem('feedback-form-state');
+  console.log(onDataForm);
+
+  onDataForm = {};
+  evt.target.reset();
+  isFormSubmitted = true;
+};
+
+onElForm();
+form.addEventListener('input', throttle(onInputForm, 500));
+form.addEventListener('submit', onSubmitForm);
